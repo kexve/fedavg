@@ -1,0 +1,13 @@
+IID: 1
+batchsize: 10
+cfraction: 0.05
+dataset: mnist
+epoch: 5
+gpu: '0'
+learning_rate: 0.01
+model_name: mnist_cnn
+num_comm: 500
+num_of_clients: 100
+save_freq: 20
+save_path: ./checkpoints
+val_freq: 20

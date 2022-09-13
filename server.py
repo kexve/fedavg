@@ -8,6 +8,9 @@ from torch import optim
 from Models import Mnist_2NN, Mnist_CNN
 from clients import ClientsGroup, client
 from model.WideResNet import WideResNet
+from datetime import datetime
+import matplotlib.pyplot as plt
+import yaml
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="FedAvg")
 parser.add_argument('-g', '--gpu', type=str, default='0', help='gpu id to use(e.g. 0,1,2,3)')
@@ -37,6 +40,12 @@ parser.add_argument('-iid', '--IID', type=int, default=0, help='the way to alloc
 def test_mkdir(path):
     if not os.path.isdir(path):
         os.mkdir(path)
+    return path
+
+def save_dict_to_yaml(dict_value: dict, save_path: str):
+    """dict保存为yaml"""
+    with open(save_path, 'w') as file:
+        file.write(yaml.dump(dict_value, allow_unicode=True))
 
 
 if __name__=="__main__":
@@ -47,10 +56,13 @@ if __name__=="__main__":
     #-----------------------文件保存-----------------------#
     # 创建结果文件夹
     #test_mkdir("./result")
-    # path = os.getcwd()
+    path = test_mkdir('./results_img/' + datetime.now().strftime("%Y%m%d_%H%M%S") + "/")
     # 结果存放test_accuracy中
-    test_txt = open("test_accuracy.txt", mode="a")
-    #global_parameters_txt = open("global_parameters.txt",mode="a",encoding="utf-8")
+    test_txt = open(path + "test_accuracy.txt", mode="a")
+    save_dict_to_yaml(args, path + "global_parameters.txt")
+    #----------------------------------------------------#
+    X_round = []
+    test_acc = []
     #----------------------------------------------------#
     # 创建最后的结果
     test_mkdir(args['save_path'])
@@ -90,9 +102,7 @@ if __name__=="__main__":
     ## 创建Clients群
     '''
         创建Clients群100个
-        
-        得到Mnist数据
-        
+        得到Mnist数据        
         一共有60000个样本
         100个客户端
         IID：
@@ -122,8 +132,6 @@ if __name__=="__main__":
         print("张量的Size"+str(var.size()))
         global_parameters[key] = var.clone()
 
-
-
     # num_comm 表示通信次数，此处设置为1k
     # 通讯次数一共1000次
     for i in range(args['num_comm']):
@@ -137,10 +145,8 @@ if __name__=="__main__":
         # 生成个客户端
         clients_in_comm = ['client{}'.format(i) for i in order[0:num_in_comm]]
 
-
         print("客户端"+str(clients_in_comm))
         print(type(clients_in_comm)) # <class 'list'>
-
 
         sum_parameters = None
         # 每个Client基于当前模型参数和自己的数据训练并更新模型
@@ -201,7 +207,11 @@ if __name__=="__main__":
         print("\n"+'accuracy: {}'.format(sum_accu / num))
 
         test_txt.write("communicate round "+str(i+1)+"  ")
-        test_txt.write('accuracy: '+str(float(sum_accu / num))+"\n")
+        accuracy = float(sum_accu / num)
+        test_txt.write('accuracy: '+str(accuracy)+"\n")
+        X_round.append(i+1)
+        test_acc.append(accuracy)
+
         #test_txt.close()
 
         if (i + 1) % args['save_freq'] == 0:
@@ -212,5 +222,18 @@ if __name__=="__main__":
                                                                                                 args['learning_rate'],
                                                                                                 args['num_of_clients'],
                                                                                                 args['cfraction'])))
+
+    #----------------------------------------------------------#
+    plt.figure()
+    plt.grid(linestyle = "--")      #设置背景网格线为虚线
+    # 先画折现图
+    # [::-1]
+    plt.plot(X_round,test_acc, linewidth=2)
+    # 再画散点图
+    # plt.scatter(X_round,test_acc,s=100,marker = '.')
+    plt.title("Test_acc Per Round")    #默认字体大小为12
+    plt.xlabel("Round")
+    plt.ylabel("Test_acc")
+    plt.savefig(path+'test_acc.png')
 
     test_txt.close()

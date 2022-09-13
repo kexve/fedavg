@@ -36,7 +36,7 @@ class GetDataSet(object):
                 然后将其划分为200组大小为300的数据切片，然后分给每个Client两个切片。
         '''
         # 加载数据集
-        data_dir = r'.\data\MNIST'
+        data_dir = r'./data/MNIST'
         # data_dir = r'./data/MNIST'
         # python路径拼接os.path.join() 路径变为.\data\MNIST\train-images-idx3-ubyte.gz
         train_images_path = os.path.join(data_dir, 'train-images-idx3-ubyte.gz')
@@ -74,7 +74,7 @@ class GetDataSet(object):
 
         assert train_images.shape[3] == 1
         assert test_images.shape[3] == 1
-        # 讲图片每一张图片变成28*28 = 784
+        # 将图片每一张图片变成28*28 = 784
         # reshape(60000,28*28)
         train_images = train_images.reshape(train_images.shape[0], train_images.shape[1] * train_images.shape[2])
         print(train_images.shape) #
@@ -89,7 +89,7 @@ class GetDataSet(object):
 
         # 是独立同分布
         '''
-            一工有60000个样本
+            一共有60000个样本
             100个客户端
             IID：
                 我们首先将数据集打乱，然后为每个Client分配600个样本。
